@@ -28,9 +28,9 @@ def isTightMuon(muon, vtx):
     if muID: cut[3] += 1
     if ( muon.innerTrack().isNull() or muon.muonBestTrack().isNull() ) : return False
     hits = muon.innerTrack().hitPattern().trackerLayersWithMeasurement() > 5 and muon.innerTrack().hitPattern().numberOfValidPixelHits() > 0
-    ip = abs(muon.muonBestTrack().dxy(vtx.position())) < 0.2 and abs(muon.muonBestTrack().dz(vtx.position())) < 0.5
-    if ip: cut[4] += 1
-    tight = muID and ip
+    #ip = abs(muon.muonBestTrack().dxy(vtx.position())) < 0.2 and abs(muon.muonBestTrack().dz(vtx.position())) < 0.5
+    #if ip: cut[4] += 1
+    tight = muID #and ip
     if tight: cut[5] +=1
     return tight
 Phase_target = ["Phase1_PU_140_1000fb_1", "Phase1_PU_50", "Phase2_PU_140"]
@@ -67,11 +67,21 @@ os.chdir("/home/lsupertopl/h2mu_ggh")
 out_tr = ROOT.TTree("TotTree","Sum of the Higgs Mass")
 
 # histogram
-hist_tot = ROOT.TH1F("hist", "Higgs Mass Distribution", 1000, 0., 200.)
+hist_tot = ROOT.TH1F("hist", "Higgs Mass Distribution", 200, 0., 200.)
 hist_tot.GetXaxis().SetTitle("GeV")
 hist_tot.GetYaxis().SetTitle("# of Higgs")
 
-cut_muon_pt = 25.
+hist2 = ROOT.TH1F("hist2", "# of muons per each event Distribution", 4, 0, 4)
+mu_num = ["0", "1", "2", "3", "4"]
+hist2.GetXaxis().SetTitle("# of muons per an event")
+hist2.GetYaxis().SetTitle("# of events happening")
+hist2.SetFillColor(38)
+sbl = 0
+while sbl < 5:
+    sbl += 1
+    hist2.GetXaxis().SetBinLabel(sbl, mu_num[sbl-1])
+
+cut_muon_pt = 30.
 cut_muon_eta = 2.1
 cut_muon_iso = 10.12
 cut_jet_pt = 30.
@@ -92,7 +102,7 @@ for x in target:
     out_num_event = open(out_f[:-5]+"_num_of_events.txt","w")
 
     # histogram
-    hist = ROOT.TH1F("hist", "Higgs Mass Distribution", 1000, 0., 200.)
+    hist = ROOT.TH1F("hist", "Higgs Mass Distribution", 200, 0., 200.)
     hist.GetXaxis().SetTitle("GeV")
     hist.GetYaxis().SetTitle("# of Higgs")
 
@@ -134,6 +144,10 @@ for x in target:
             selectedmuons.append(m)
             nmuons +=1
         print a
+        # the number of muons per event#  
+        ev_mu = a[4]
+        hist2.Fill(mu_num[ev_mu],1)
+        ################################
         print cut
         event.getByLabel(jetsLabel,jets)
         for g,j in enumerate(jets.product()):
@@ -145,7 +159,6 @@ for x in target:
                 continue
             selectedjets.append(j)
             njets += 1
-
         if len(selectedmuons) < 2:
             continue
 
@@ -160,12 +173,10 @@ for x in target:
         higgs = ROOT.TLorentzVector(mu1.px(), mu1.py(), mu1.pz(), mu1.energy()) + ROOT.TLorentzVector(mu2.px(), mu2.py(), mu2.pz(), mu2.energy())
 
         print higgs.M()
-    
         h_M = higgs.M()
     
         hist.Fill(h_M)
         hist_tot.Fill(h_M)
-
         npass +=1
         
     print "nmuons",nmuons
@@ -188,6 +199,9 @@ for x in target:
 print sum_cut
 print sum_tot
 hist_tot.Draw()
+#hist2.LabelsDeflate()
+#hist2.LabelsOption("u","X")
+hist2.Draw()
 out_root_tot.Write()
 out_root_tot.Close()
 

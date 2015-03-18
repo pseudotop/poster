@@ -67,9 +67,19 @@ os.chdir("./h2mu_ggh")
 out_tr = ROOT.TTree("TotTree","Sum of the Higgs Mass")
 
 # histogram
-hist_tot = ROOT.TH1F("hist", "Higgs Mass Distribution", 1000, 0., 200.)
+hist_tot = ROOT.TH1F("hist", "Higgs Mass Distribution", 200, 0., 200.)
 hist_tot.GetXaxis().SetTitle("GeV")
 hist_tot.GetYaxis().SetTitle("# of Higgs")
+
+hist2 = ROOT.TH1F("hist2", "# of muons per each event Distribution", 4, 0, 4)
+mu_num = ["0", "1", "2", "3", "4"]
+hist2.GetXaxis().SetTitle("# of muons per an event")
+hist2.GetYaxis().SetTitle("# of events happening")
+hist2.SetFillColor(38)
+sbl = 0
+while sbl < 5:
+    sbl += 1
+    hist2.GetXaxis().SetBinLabel(sbl, mu_num[sbl-1])
 
 cut_muon_pt = 30.
 #cut_muon_eta = 2.1
@@ -130,10 +140,14 @@ for x in target:
             pfIsolationR04 = m.pfIsolationR04().sumChargedHadronPt+m.pfIsolationR04().sumPhotonEt+m.pfIsolationR04().sumNeutralHadronEt
             #if pfIsolationR04/m.pt() > cut_muon_iso:
             #    continue
-            #a[4] += 1
+            a[4] += 1
             selectedmuons.append(m)
             nmuons +=1
         print a
+        # the number of muons per event#  
+        ev_mu = a[4]
+        hist2.Fill(mu_num[ev_mu],1)
+        ################################
         print cut
         event.getByLabel(jetsLabel,jets)
         for g,j in enumerate(jets.product()):
@@ -185,6 +199,7 @@ for x in target:
 print sum_cut
 print sum_tot
 hist_tot.Draw()
+hist2.Draw()
 out_root_tot.Write()
 out_root_tot.Close()
 
